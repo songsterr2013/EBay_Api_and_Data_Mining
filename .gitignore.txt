@@ -1,0 +1,10 @@
+.idea
+.testing_py
+.venv
+__pycache__
+data
+Discography
+other
+.env
+api_calls
+step
