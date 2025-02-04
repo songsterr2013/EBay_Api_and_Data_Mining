@@ -46,6 +46,7 @@ class Ebay:
 
         file_path = os.path.join(self.artist_folder, file_name)
         df = pd.DataFrame(data)
+        df["title"] = df["title"].apply(lambda x: f"'{x}" if x.startswith("=") else x)
         df.to_excel(file_path, index=False)
 
 if __name__ == "__main__":

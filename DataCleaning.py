@@ -82,7 +82,9 @@ class DataCleaning:
         self.df = pd.concat([self.df] + list_to_concat, axis=1)
 
     def add_item_year_col(self):
-        self.df['item_year'] = self.df['title'].str.extract(r'\b(19\d{2}|20\d{2})\b')
+        # match a number between 1900 and 2030
+        self.df['item_year'] = self.df['title'].str.extract(r'\b(19[0-9]{2}|20[0-2][0-9]|2030)\b')
+
 
     def add_year_difference_col(self):
         self.df['year_difference'] = abs(self.df['Album_year'] - self.df['item_year'])
@@ -119,9 +121,20 @@ class DataCleaning:
         self.df = self.df[query].reset_index(drop=True)
 
     def read_discography(self):
-        disco_df = pd.read_excel(self.discography_file_loc, dtype={'Year_of_pressing': 'Int64'})
-        disco_df['title'] = disco_df['title'].str.strip() # make sure no blank space
-        artist_albums = disco_df[['year_of_pressing', 'title', 'title_for_match']].values.tolist()
+        dtype_mapping = {
+            "Year_of_pressing": "Int64",
+            "title": str,
+            "title_for_match": str,
+            "label": str
+        }
+        disco_df = pd.read_excel(self.discography_file_loc, dtype=dtype_mapping, engine="openpyxl")
+
+        # make sure no blank space
+        columns_to_strip = ['title', 'title_for_match', 'label']
+        for column in columns_to_strip:
+            disco_df[column] = disco_df[column].str.strip()
+
+        artist_albums = disco_df[['year_of_pressing', 'title', 'title_for_match', 'label']].values.tolist()
         self.df['title'] = self.df['title'].astype('string') # make sure ['title'] is a string format
 
         def extract_album_info(title, name):
@@ -130,23 +143,25 @@ class DataCleaning:
                 artist_year = album[0]
                 artist_title = album[1]
                 match_title = album[2]
+                album_label = album[3]
                 if match_title.lower() != name.lower() and match_title.lower() in title.lower():
-                    return artist_title, artist_year
+                    return artist_title, artist_year, album_label
 
             for album in artist_albums:
                 artist_year = album[0]
                 artist_title = album[1]
                 match_title = album[2]
+                album_label = album[3]
                 # the artist's name must appear at least twice to be considered a match
                 if match_title.lower() == name.lower() and title.lower().count(
                         name.lower()) >= 2:
-                    return artist_title, artist_year
+                    return artist_title, artist_year, album_label
 
             # otherwise, no match can be found
-            return None, None
+            return None, None, None
 
         # add the year of first press col
-        self.df[['Album_name', 'Album_year']] = self.df['title'].apply(
+        self.df[['Album_name', 'Album_year', 'album_label']] = self.df['title'].apply(
             lambda x: extract_album_info(x, self.given_name)).apply(pd.Series)
         # remove ['Album_name'] == Nan data
         self.df = self.df[~self.df['Album_name'].isnull()]

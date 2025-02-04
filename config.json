@@ -57,7 +57,8 @@
         "watchCount",
         "convertedBuyItNowPrice.value",
         "conditionDisplayName",
-        "location"
+        "location",
+        "album_label"
     ],
     "cols_to_rename": {
         "title": "商品標題",
@@ -76,7 +77,8 @@
         "convertedBuyItNowPrice.value": "即買價格(USD)",
         "viewItemURL": "商品URL",
         "itemId": "商品Id",
-        "location": "詳細位置"
+        "location": "詳細位置",
+        "album_label": "唱片廠牌"
     },
     "jazz_giant": [
         "",
@@ -97,7 +99,7 @@
         "",
         ""
     ],
-    "keywords": "",
+    "keywords": "Duke Ellington vinyl",
     "entry_per_page": 100,
     "max_pages": 100
 }

@@ -29,13 +29,21 @@ def main():
     #               'Wes Montgomery', 'Ella Fitzgerald', 'Charlie Parker',
     #               'Herbie Hancock', 'Cannonball Adderley', 'Erroll Garner',
     #               'Frank Sinatra', 'Chick Corea', 'Gerry Mulligan',
-    #               'Charles Mingus', 'Oscar Peterson', 'Django Reinhardt',
+    #               'Charles Mingus', 'Oscar Peterson', 'Joe Pass',
     #               'Ornette Coleman', 'Sonny Rollins', 'Thelonious Monk',
-    #               'Pat Metheny', 'Nat King Cole', 'Art Blakey',
+    #               'Pat Metheny', 'Antonio Carlos Jobim', 'Art Blakey',
     #               'Billie Holiday', 'Jim Hall', 'Sarah Vaughan',
     #               ]
 
-    jazz_giant = ['Chet Baker']
+    jazz_giant = ['Louis Armstrong', 'Duke Ellington', 'Dave Brubeck',
+                  'Wes Montgomery', 'Ella Fitzgerald', 'Charlie Parker',
+                  'Herbie Hancock', 'Cannonball Adderley', 'Erroll Garner',
+                  'Frank Sinatra', 'Chick Corea', 'Gerry Mulligan',
+                  'Charles Mingus', 'Oscar Peterson', 'Joe Pass',
+                  'Ornette Coleman', 'Sonny Rollins', 'Thelonious Monk',
+                  'Pat Metheny', 'Antonio Carlos Jobim', 'Art Blakey',
+                  'Billie Holiday', 'Jim Hall', 'Sarah Vaughan'
+                  ]
     for name in jazz_giant:
         update_config(config_path=config_file, key=key, value=name + ' ' + 'vinyl')
 
@@ -46,7 +54,4 @@ def main():
         subprocess.run([python_exe, py2])
 
 if __name__ == "__main__":
-    a = 'Nat King Cole vinyl'.replace(" ", "_").rsplit("_", 1)[0]
-    print(a)
-    exit()
     main()
