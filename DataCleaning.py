@@ -11,6 +11,7 @@ class DataCleaning:
     def __init__(self, searched_word):
         self.artist_name = searched_word.replace(" ", "_").rsplit("_", 1)[0]
         self.given_name = self.artist_name.split('_')[0]
+        self.last_name = self.artist_name.split('_')[-1]
         self.main_folder = 'data'
         self.discography_file_loc = os.path.join('Discography', f'{self.artist_name}_discography.xlsx')
         self.artist_folder = os.path.join(self.main_folder, f'data_{self.artist_name}')
@@ -137,32 +138,36 @@ class DataCleaning:
         artist_albums = disco_df[['year_of_pressing', 'title', 'title_for_match', 'label']].values.tolist()
         self.df['title'] = self.df['title'].astype('string') # make sure ['title'] is a string format
 
-        def extract_album_info(title, name):
-            # Considering jazz albums tend to name itself with artist's name, add a condition to prevent loose match
-            for album in artist_albums:
-                artist_year = album[0]
-                artist_title = album[1]
-                match_title = album[2]
-                album_label = album[3]
-                if match_title.lower() != name.lower() and match_title.lower() in title.lower():
-                    return artist_title, artist_year, album_label
+        def extract_album_info(title, full_name, given_name, last_name):
+            # make sure everything for matching is lower case
+            full_name = full_name.replace("_", " ")
+            title, full_name, given_name, last_name = [item.lower() for item in (title, full_name, given_name, last_name)]
+            name_set = {full_name, given_name, last_name}
+            counts = {name: title.count(name) for name in name_set}
 
             for album in artist_albums:
-                artist_year = album[0]
-                artist_title = album[1]
-                match_title = album[2]
-                album_label = album[3]
-                # the artist's name must appear at least twice to be considered a match
-                if match_title.lower() == name.lower() and title.lower().count(
-                        name.lower()) >= 2:
-                    return artist_title, artist_year, album_label
+                artist_year, artist_title, match_title, album_label = album
+                match_title = match_title.lower()
+                cols_to_return = (artist_title, artist_year, album_label)
+
+                if match_title not in title:  # Skip if no match
+                    continue
+                if match_title not in name_set:  # matched but no in name set
+                    return cols_to_return
+
+                # matched, in name set
+                if match_title == full_name and counts[full_name] >= 2:
+                    return cols_to_return
+                if match_title == given_name and counts[given_name] >= 2 and counts[last_name] >= 1:
+                    return cols_to_return
+                if match_title == last_name and counts[given_name] >= 1 and counts[last_name] >= 2:
+                    return cols_to_return
 
             # otherwise, no match can be found
             return None, None, None
 
-        # add the year of first press col
         self.df[['Album_name', 'Album_year', 'album_label']] = self.df['title'].apply(
-            lambda x: extract_album_info(x, self.given_name)).apply(pd.Series)
+            lambda x: extract_album_info(x, self.artist_name, self.given_name, self.last_name)).apply(pd.Series)
         # remove ['Album_name'] == Nan data
         self.df = self.df[~self.df['Album_name'].isnull()]
 
@@ -186,7 +191,6 @@ if __name__ == "__main__":
 
     # read json
     config = load_config("config.json")
-
     keywords = get_config_value(config, "keywords")
     cols_to_fix = get_config_value(config, "cols_to_fix")
     cols_to_del = get_config_value(config, "cols_to_del")

@@ -11,7 +11,8 @@ from util import load_config, get_config_value, make_folder, setup_logging
 class Ebay:
     def __init__(self, api_key, searched_word, data):
         self.api_key = api_key
-        self.artist_name = searched_word.replace(" ", "_").rsplit("_", 1)[0]
+        self.searched_word = searched_word
+        self.artist_name = self.searched_word.replace(" ", "_").rsplit("_", 1)[0]
         self.main_folder = 'data'
         self.artist_folder = os.path.join(self.main_folder, f'data_{self.artist_name}')
         self.data = data
@@ -20,19 +21,30 @@ class Ebay:
         try:
             api = Connection(appid=self.api_key, config_file=None)
             response = api.execute('findItemsAdvanced', self.data)
+            if not response.reply:
+                print("Empty API response received.")
+                logging.warning("Empty API response received.")
             return response
 
         except ConnectionError as e:
             print(e)
             print(e.response.dict())
 
-    @staticmethod
-    def parse(response):
+    def parse(self, response):
         items_list = []
-        for item in response.reply.searchResult.item:
-            if hasattr(item, '__dict__'):
-                # change it into dict and append in list
-                items_list.append(item.__dict__)
+        search_result = getattr(response.reply, "searchResult", None)
+        if search_result:
+            if hasattr(search_result, "item"):
+                for item in search_result.item:
+                    if hasattr(item, '__dict__'):
+                        # change it into dict and append in list
+                        items_list.append(item.__dict__)
+            else:
+                print(f"No items found in searchResult.{self.searched_word}")
+                logging.warning("No items found in searchResult.")
+        else:
+            print(f"No searchResult found in response.{self.searched_word}")
+            logging.warning(f"No searchResult found in response.{self.searched_word}")
         return items_list
 
     def make_n_save_dataframe(self, data):
@@ -64,7 +76,7 @@ if __name__ == "__main__":
     entry_per_page = get_config_value(config, "entry_per_page") # how many item to get per page
     max_pages = get_config_value(config, "max_pages") # the max is 100
 
-    e = Ebay(API_KEY, keywords, {})
+    ebay = Ebay(API_KEY, keywords, {})
 
     sort_order = ["BestMatch", "StartTimeNewest"]
     total_api_calls = 0
@@ -85,12 +97,12 @@ if __name__ == "__main__":
                     "paginationInput": {"pageNumber": str(PAGE_NUMBER), "entriesPerPage": str(entry_per_page)},
                     "sortOrder": str(method)
                 }
-                e.data = search_filter
+                ebay.data = search_filter
 
                 try:
-                    to_parse = e.fetch()
+                    to_parse = ebay.fetch()
                     if to_parse:
-                        data_batch = e.parse(to_parse)
+                        data_batch = ebay.parse(to_parse)
                         final_data.extend(data_batch)
 
                         total_api_calls += 1
@@ -105,6 +117,6 @@ if __name__ == "__main__":
 
                 pbar.update(1)
 
-        e.make_n_save_dataframe(final_data)
+        ebay.make_n_save_dataframe(final_data)
 
     logging.info(f"Total API calls made: {total_api_calls}")
