@@ -14,12 +14,12 @@ class CreateTableau:
         self.target_file_rename = f"eBay電商平台上的{self.artist_name_no_dash}唱片商品分析.twb"
 
     def find_the_temple(self):
-        file_path = os.path.join(self.main_folder, self.target_file)
+        file_path = self.target_file
 
         if os.path.exists(file_path):
             return file_path
         else:
-            print(f"未找到檔案 '{self.target_file}' 在資料夾 '{self.main_folder}' 中。")
+            print(f"未找到檔案 '{self.target_file}'")
             return None
 
     def copy_file_to_artist_folders(self, path):
