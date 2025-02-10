@@ -3,7 +3,6 @@
 .venv
 __pycache__
 data
-Discography
 other
 .env
 api_calls.log
